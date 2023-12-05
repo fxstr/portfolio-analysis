@@ -42,6 +42,15 @@ const getRelativeDrawdownAsSeries = (data) => {
 };
 
 /**
+ * Returns the maximum relative drawdown, e.g. -0.17 for a 17% drawdown
+ * @param {Number[]} data 
+ * @returns {Number}
+ */
+const getMaxRelativeDrawdown = (data) => (
+    Math.min(...getRelativeDrawdownAsSeries(data))
+);
+
+/**
  * Returns the relative change from the current to the previous item.
  * @param {Number[]} data 
  * @returns {Number[]}
@@ -133,6 +142,7 @@ export {
     ensureArray,
     getMaxAsSeries,
     getRelativeDrawdownAsSeries,
+    getMaxRelativeDrawdown,
     getRelativeChangeAsSeries,
     getAverage,
     getRelativeTimeInMarket,

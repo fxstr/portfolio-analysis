@@ -2,6 +2,7 @@ import {
     ensureArray,
     getMaxAsSeries,
     getRelativeDrawdownAsSeries,
+    getMaxRelativeDrawdown,
     getRelativeChangeAsSeries,
     getAverage,
     getRelativeTimeInMarket,
@@ -34,6 +35,11 @@ test('get drawdown as series', () => {
             0,
             -0.012500000000000067,
         ]);
+});
+
+test('get max drawdown', () => {
+    expect(getMaxRelativeDrawdown(createTestData()))
+        .toEqual(-0.017021276595744594);
 });
 
 test('get relative change as series', () => {

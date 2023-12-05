@@ -1,6 +1,6 @@
 # Intro
 
-Tools and statistics to analyze a portfolio's quality, e.g. CAGR, Sortino, Drawdowns, Sharpe 
+Tools and statistics to analyze a portfolio's performance, e.g. CAGR, Sortino, Drawdowns, Sharpe 
 and Calmar.
 
 Comes without dependencies.

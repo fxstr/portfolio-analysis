@@ -1,7 +1,7 @@
 {
   "name": "portfolio-analysis",
   "version": "1.0.1",
-  "description": "Tools and statistics to analyze a portfolio's quality, e.g. CAGR, Sortino, Drawdowns, Sharpe and Calmar.",
+  "description": "Tools and statistics to analyze a portfolio's performance, e.g. CAGR, Sortino, Drawdowns, Sharpe and Calmar.",
   "main": "src/main.mjs",
   "scripts": {
     "test": "node --experimental-vm-modules node_modules/jest/bin/jest.js --watch"
