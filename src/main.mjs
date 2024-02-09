@@ -137,6 +137,16 @@ const getSortino = (data) => {
     return getAverage(getRelativeChangeAsSeries(data).slice(1)) / downside;
 }
 
+/**
+ * Returns data as a 1-based series (the first entry is 1, all following entries have the same
+ * relative difference as the original series)
+ * @param {Number[]} data 
+ * @returns {Number[]}
+ */
+const getNormalizedAsSeries = (data) => (
+    ensureArray(data).map(item => item / data[0])
+);
+
 
 export {
     ensureArray,
@@ -149,4 +159,5 @@ export {
     getCAGR,
     getCalmar,
     getSortino,
+    getNormalizedAsSeries,
 };

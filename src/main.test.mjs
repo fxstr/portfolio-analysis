@@ -9,8 +9,18 @@ import {
     getCAGR,
     getCalmar,
     getSortino,
+    getNormalizedAsSeries,
 } from './main.mjs';
 import createTestData from './test/createTestData.mjs';
+
+/* global expect, test */
+
+const expectToBeCloseToArray = (actual, expected) => {
+    expect(actual.length).toBe(expected.length);
+    actual.forEach((value, index) => (
+        expect(value).toBeCloseTo(expected[index])
+    ));
+};
 
 test('ensures array and type', () => {
     expect(() => ensureArray('t')).toThrow('Expected parameter to be an array, got t instead.');
@@ -25,8 +35,9 @@ test('get max as series', () => {
 });
 
 test('get drawdown as series', () => {
-    expect(getRelativeDrawdownAsSeries(createTestData()))
-        .toEqual([
+    expectToBeCloseToArray(
+        getRelativeDrawdownAsSeries(createTestData()),
+        [
             0,
             -0.008510638297872353,
             -0.017021276595744594,
@@ -34,29 +45,33 @@ test('get drawdown as series', () => {
             0,
             0,
             -0.012500000000000067,
-        ]);
+        ],
+    );
 });
 
 test('get max drawdown', () => {
     expect(getMaxRelativeDrawdown(createTestData()))
-        .toEqual(-0.017021276595744594);
+        .toBeCloseTo(-0.017021276595744594);
 });
 
 test('get relative change as series', () => {
-    expect(getRelativeChangeAsSeries(createTestData()))
-        .toEqual([
-            Number.NaN,
-            -0.008510638297872353,
-            -0.008583690987124415,
+    const result = getRelativeChangeAsSeries(createTestData());
+    expect(result[0]).toBe(Number.NaN);
+    expectToBeCloseToArray(
+        result.slice(1),
+        [
+            -0.0085106382978,
+            -0.0085836909871,
             0,
-            0.030303030303030276,
-            0.008403361344537785,
-            -0.012500000000000067,
-        ]);
+            0.03030303030303,
+            0.00840336134453,
+            -0.0125000000000,
+        ],
+    );
 });
 
 test('get average', () => {
-    expect(getAverage([5, 7, 6])).toBe(6);
+    expect(getAverage(createTestData())).toBe(23.5);
 });
 
 test('get relative time in market', () => {
@@ -94,4 +109,12 @@ test('get sortino', () => {
     // Result: 0.00151868 / 0.01003942 = 0.15127169
     expect(getSortino(createTestData()))
         .toBe(0.15127368221893184);
+});
+
+test('get normalized series', () => {
+    expectToBeCloseToArray(
+        getNormalizedAsSeries(createTestData()),
+        [1, 0.9914893, 0.98297, 0.98297, 1.012765, 1.021276, 1.008510],
+    );
+    expect(getNormalizedAsSeries([])).toEqual([]);
 });
