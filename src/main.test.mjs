@@ -9,7 +9,10 @@ import {
     getCAGR,
     getCalmar,
     getSortino,
+    getSharpe,
     getNormalizedAsSeries,
+    getLinearRegression,
+    getLinearRegressionCAGR,
 } from './main.mjs';
 import createTestData from './test/createTestData.mjs';
 
@@ -111,6 +114,14 @@ test('get sortino', () => {
         .toBe(0.15127368221893184);
 });
 
+test('get sharpe', () => {
+    // stdDev is 0.3251 (https://www.calculator.net/standard-deviation-calculator.html)
+    // CAGR is 0.36250 (see CAGR test)
+    // Sharpe is therefore 1.1149
+    expect(getSharpe(createTestData(), new Date(2023, 0, 1), new Date(2023, 0, 11)))
+        .toBeCloseTo(1.1149);
+});
+
 test('get normalized series', () => {
     expectToBeCloseToArray(
         getNormalizedAsSeries(createTestData()),
@@ -118,3 +129,47 @@ test('get normalized series', () => {
     );
     expect(getNormalizedAsSeries([])).toEqual([]);
 });
+
+test('returns linear regression', () => {
+    // Throws on invalid xValues
+    expect(() => getLinearRegression(createTestData(), [1, 2])).toThrow(/same amout of items as yValues/);
+    // Regular array as argument, no xValues; validated with
+    // https://www.statskingdom.com/linear-regression-calculator.html
+    const regularResult = getLinearRegression(createTestData());
+    expect(Object.keys(regularResult)).toEqual(['m', 'b']);
+    expect(regularResult.b).toBeCloseTo(23.21);
+    expect(regularResult.m).toBeCloseTo(0.096);
+    // Regular array as argument, with yValues
+    const xValuesResult = getLinearRegression(createTestData(), [1, 2, 4, 6, 4, 8, 3]);
+    expect(xValuesResult.b).toBeCloseTo(23.34);
+    expect(xValuesResult.m).toBeCloseTo(0.041);
+    // Empty array as argument
+    const emptyResult = getLinearRegression([]);
+    expect(emptyResult.b).toBe(NaN);
+    expect(emptyResult.m).toBe(NaN);
+});
+
+test('returns linear regression cagr', () => {
+    expect(() => getLinearRegressionCAGR([], [2])).toThrow(/instance of Date, got 2/);
+    expect(
+        () => getLinearRegressionCAGR([], [new Date(2024, 0, 2), new Date(2024, 0, 1)]),
+    ).toThrow(/to be after the previous.*date Mon Jan 01 2024/);
+    const datesAsString = [
+        '2024-01-01',
+        '2024-01-02',
+        '2024-01-03',
+        '2024-01-04',
+        '2024-01-06',
+        '2024-01-08',
+        '2024-01-09',
+    ];
+    const dates = datesAsString.map((item) => new Date(item));
+    const result = getLinearRegressionCAGR(createTestData(), dates);
+    // Use https://www.statskingdom.com/linear-regression-calculator.html with
+    // xValues: 0, 1, 2, 3, 5, 7, 8
+    // m = 23.2052, b = 0.07938
+    // Date difference is 8 days; end value is therefore 23.84024. 8 days is 0.02191 years
+    // CAGR is ((endValue / startValue) ** (1 / years)) - 1 = 2.42866092
+    expect(result).toBeCloseTo(2.428);
+});
+

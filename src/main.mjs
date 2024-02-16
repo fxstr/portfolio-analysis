@@ -1,13 +1,19 @@
+import { linearRegression, standardDeviation } from 'simple-statistics'
+
+const dayInMs = 1000 * 60 * 60 * 24;
+const yearInMs = dayInMs * 365;
+
 /**
  * Ensures that an array is passed and optionally that every member is of the given type. Throws
  * if expectation is not met.
  * @param {array} data 
- * @param {*} type          Type to check for by comparing it to `typeof item`.
+ * @param {string?} type    Type to check for by comparing it to `typeof item`; defaults to
+ *                          'number'
  * @returns {array}         Original array
  * @throws                  An error if anything else than an array is passed or the type
  *                          requirements are not met
  */
-const ensureArray = (data, type) => {
+const ensureArray = (data, type = 'number') => {
     if (!Array.isArray(data)) {
         throw new Error(`Expected parameter to be an array, got ${data} instead.`);
     }
@@ -85,8 +91,8 @@ const getRelativeTimeInMarket = (data) => (
 );
 
 /**
- * Returns compound annual growth rate ((endValue - startValue) ** (1 / years)) - 1 where a
- * year is assumed to have 365 days.
+ * Returns compound annual growth rate ((endValue / startValue) ** (1 / years)) - 1 where a
+ * year is assumed to have 365 days. See https://www.investopedia.com/terms/c/cagr.asp
  * @param {Number[]} data 
  * @param {Date} startDate 
  * @param {Date} endDate 
@@ -101,9 +107,8 @@ const getCAGR = (data, startDate, endDate) => {
     if (startDate.getTime() >= endDate.getTime()) {
         throw new Error(`Parameter startDate (${startDate}) must lie before endDate (${endDate}).`);
     }
-    const yearInMs = 1000 * 60 * 60 * 24 * 365;
     const diffInYears = (endDate.getTime() - startDate.getTime()) / yearInMs;
-    return ensureArray(data, 'number') && ((data.at(-1) / data.at(0)) ** (1 / diffInYears) - 1);
+    return ensureArray(data) && ((data.at(-1) / data.at(0)) ** (1 / diffInYears) - 1);
 };
 
 /**
@@ -137,6 +142,11 @@ const getSortino = (data) => {
     return getAverage(getRelativeChangeAsSeries(data).slice(1)) / downside;
 }
 
+const getSharpe = (data, startDate, endDate) => {
+    const stdDev = standardDeviation(ensureArray(data));
+    return getCAGR(data, startDate, endDate) / stdDev;
+}
+
 /**
  * Returns data as a 1-based series (the first entry is 1, all following entries have the same
  * relative difference as the original series)
@@ -146,6 +156,55 @@ const getSortino = (data) => {
 const getNormalizedAsSeries = (data) => (
     ensureArray(data).map(item => item / data[0])
 );
+
+/**
+ * Returns linear regression for a dataset, consisting of slope m and intersect b. Uses
+ * http://simple-statistics.github.io/docs/#linearregression.
+ * @param {Number[]} data
+ * @param {Number[]?} xValues       x values; if not provided, integers starting at 0
+ *                                  up will be used
+ * @returns {m: Number, b: Number}
+ */
+const getLinearRegression = (yValues, xValues) => {
+    if (xValues && xValues.length !== yValues.length) {
+        throw new Error(`If the xValues are provided for getLinearRegression, they must be an array with the same amout of items as yValues; xValues.length is ${xValues.length}, yValues.length is ${yValues.length}.`);
+    }
+    return linearRegression(
+        ensureArray(yValues).map((value, index) => [xValues ? xValues[index] : index, value]),
+    )
+};
+
+/**
+ * Returns the CAGR based on a linear regression of the data provided; the serie's first value
+ * is m, the last value equals m + b * diff where diff is the amount of time between the first
+ * and last value of data.
+ * @param {Number[]} data
+ * @param {Date[]} dates
+ * @returns {Number}            CAGR for linear regression, e.g. 0.02 for 2%
+ */
+const getLinearRegressionCAGR = (data, dates) => {
+    // Convert dates to indices; count index up by the amount of dates that lies between the
+    // current and the previous date
+    const invalidDate = dates.find((item) => !(item instanceof Date));
+    if(invalidDate) {
+        throw new Error(`Expects every item of dates to be an instance of Date, got ${invalidDate} in ${dates}.`);
+    }
+    const mixedUpDate = dates.find((item, index) => (
+        index !== 0 && item.getTime() <= dates.at(index - 1).getTime()
+    ));
+    if (mixedUpDate) {
+        throw new Error(`Expects every item of dates to be after the previous item; date ${mixedUpDate} does not follow that rule.`)
+    }
+    const xValues = ensureArray(dates, 'object')
+        .map((item, index) => index === 0 ? 0 : item.getTime() - dates.at(index - 1).getTime())
+        .map((item) => Math.round(item / dayInMs))
+        .reduce((previous, item) => (
+            [...previous, previous.length === 0 ? 0 : previous.at(-1) + item]
+        ), []);
+    const { m, b } = getLinearRegression(data, xValues);
+    const endValue = b + m * Math.max(...xValues);
+    return getCAGR([b, endValue], dates.at(0), dates.at(-1));
+};
 
 
 export {
@@ -159,5 +218,8 @@ export {
     getCAGR,
     getCalmar,
     getSortino,
+    getSharpe,
     getNormalizedAsSeries,
+    getLinearRegression,
+    getLinearRegressionCAGR,
 };
