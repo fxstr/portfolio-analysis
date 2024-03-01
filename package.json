@@ -1,6 +1,6 @@
 {
   "name": "portfolio-analysis",
-  "version": "1.3.0",
+  "version": "1.4.0",
   "description": "Tools and statistics to analyze a portfolio's performance, e.g. CAGR, Sortino, Drawdowns, Sharpe and Calmar.",
   "main": "src/main.mjs",
   "scripts": {
