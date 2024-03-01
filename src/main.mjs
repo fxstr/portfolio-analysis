@@ -142,10 +142,25 @@ const getSortino = (data) => {
     return getAverage(getRelativeChangeAsSeries(data).slice(1)) / downside;
 }
 
-const getSharpe = (data, startDate, endDate) => {
-    const stdDev = standardDeviation(ensureArray(data));
-    return getCAGR(data, startDate, endDate) / stdDev;
-}
+/**
+ * Returns the standard deviation of the data set
+ * @param {Number} data 
+ * @returns {Number}
+ */
+const getStandardDeviation = (data) => (
+    standardDeviation(ensureArray(data))
+);
+
+/**
+ * Returns the sharpe ration of the data set
+ * @param {Number[]} data 
+ * @param {Date} startDate 
+ * @param {Date} endDate 
+ * @returns {Number}
+ */
+const getSharpe = (data, startDate, endDate) => (
+    getCAGR(data, startDate, endDate) / getStandardDeviation(data)
+);
 
 /**
  * Returns data as a 1-based series (the first entry is 1, all following entries have the same
@@ -216,6 +231,7 @@ export {
     getAverage,
     getRelativeTimeInMarket,
     getCAGR,
+    getStandardDeviation,
     getCalmar,
     getSortino,
     getSharpe,

@@ -9,6 +9,7 @@ import {
     getCAGR,
     getCalmar,
     getSortino,
+    getStandardDeviation,
     getSharpe,
     getNormalizedAsSeries,
     getLinearRegression,
@@ -114,8 +115,13 @@ test('get sortino', () => {
         .toBe(0.15127368221893184);
 });
 
-test('get sharpe', () => {
+test('get standard deviation', () => {
     // stdDev is 0.3251 (https://www.calculator.net/standard-deviation-calculator.html)
+    expect(getStandardDeviation(createTestData())).toBeCloseTo(0.3251);
+});
+
+test('get sharpe', () => {
+    // stdDev is 0.3251 (see std dev test)
     // CAGR is 0.36250 (see CAGR test)
     // Sharpe is therefore 1.1149
     expect(getSharpe(createTestData(), new Date(2023, 0, 1), new Date(2023, 0, 11)))
