@@ -48,7 +48,8 @@ const getRelativeDrawdownAsSeries = (data) => {
 };
 
 /**
- * Returns the maximum relative drawdown, e.g. -0.17 for a 17% drawdown
+ * Returns the maximum relative drawdown, e.g. -0.17 for a 17% drawdown (return value is always
+ * <= 0)
  * @param {Number[]} data 
  * @returns {Number}
  */
@@ -221,6 +222,18 @@ const getLinearRegressionCAGR = (data, dates) => {
     return getCAGR([b, endValue], dates.at(0), dates.at(-1));
 };
 
+/**
+ * Returns the self-invented robust ratio, i.e. the CAGR for the linear regression of the series
+ * multiplied by (1 - max drawdown).
+ * @param {Number[]} data
+ * @param {Date[]} dates
+ * @returns {Number}
+ */
+const getRobustRatio = (data, dates) => (
+    // getMaxRelativeDrawdown alsways returns a negative value
+    getLinearRegressionCAGR(data, dates) * (1 + getMaxRelativeDrawdown(data))
+);
+
 
 export {
     ensureArray,
@@ -238,4 +251,5 @@ export {
     getNormalizedAsSeries,
     getLinearRegression,
     getLinearRegressionCAGR,
+    getRobustRatio,
 };

@@ -14,6 +14,7 @@ import {
     getNormalizedAsSeries,
     getLinearRegression,
     getLinearRegressionCAGR,
+    getRobustRatio,
 } from './main.mjs';
 import createTestData from './test/createTestData.mjs';
 
@@ -179,3 +180,18 @@ test('returns linear regression cagr', () => {
     expect(result).toBeCloseTo(2.428);
 });
 
+test('returns robust ratio', () => {
+    const datesAsString = [
+        '2024-01-01',
+        '2024-01-02',
+        '2024-01-03',
+        '2024-01-04',
+        '2024-01-06',
+        '2024-01-08',
+        '2024-01-09',
+    ];
+    const dates = datesAsString.map((item) => new Date(item));
+    const result = getRobustRatio(createTestData(), dates);
+    // CAGR is 2.428, max DD is 0.0170; result is therefore 2.428 * (1 - 0.0170) = 2.386
+    expect(result).toBeCloseTo(2.386);
+});
