@@ -92,8 +92,19 @@ const getRelativeTimeInMarket = (data) => (
 );
 
 /**
+ * Returns cumulative return, e.g. 0.2 for a 20% return (from the first item of data to the last
+ * item of data).
+ * @param {Number[]} data 
+ * @returns {Number}
+ */
+const getCumulativeReturn = (data) => (
+    ensureArray(data) && ((data.at(-1) / data.at(0)))
+);
+
+/**
  * Returns compound annual growth rate ((endValue / startValue) ** (1 / years)) - 1 where a
- * year is assumed to have 365 days. See https://www.investopedia.com/terms/c/cagr.asp
+ * year is assumed to have 365 days. Returns fraction (e.g. 0.05 for 5%).
+ * See https://www.investopedia.com/terms/c/cagr.asp
  * @param {Number[]} data 
  * @param {Date} startDate 
  * @param {Date} endDate 
@@ -109,7 +120,7 @@ const getCAGR = (data, startDate, endDate) => {
         throw new Error(`Parameter startDate (${startDate}) must lie before endDate (${endDate}).`);
     }
     const diffInYears = (endDate.getTime() - startDate.getTime()) / yearInMs;
-    return ensureArray(data) && ((data.at(-1) / data.at(0)) ** (1 / diffInYears) - 1);
+    return getCumulativeReturn(data) ** (1 / diffInYears) - 1;
 };
 
 /**
@@ -252,4 +263,5 @@ export {
     getLinearRegression,
     getLinearRegressionCAGR,
     getRobustRatio,
+    getCumulativeReturn,
 };

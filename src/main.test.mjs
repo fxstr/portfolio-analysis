@@ -15,6 +15,7 @@ import {
     getLinearRegression,
     getLinearRegressionCAGR,
     getRobustRatio,
+    getCumulativeReturn,
 } from './main.mjs';
 import createTestData from './test/createTestData.mjs';
 
@@ -91,9 +92,18 @@ test('get CAGR', () => {
     expect(() => getCAGR(createTestData())).toThrow('Parameter startDate must be an instance of Date, is undefined instead.');
     expect(() => getCAGR(createTestData(), new Date())).toThrow('Parameter endDate must be an instance of Date, is undefined instead.');
     expect(() => getCAGR(createTestData(), new Date(2023, 0, 2), new Date(2023, 0, 1))).toThrow(/Parameter startDate \(.*\) must lie before endDate.*/);
+    // Test data contains 7 entries (Jan 1 to 8); test with a long weekend in-between (Jan 1 to 11)
     // ((23.7 / 23.5) ** (1 / (10 / 365))) - 1
     expect(getCAGR(createTestData(), new Date(2023, 0, 1), new Date(2023, 0, 11)))
         .toBe(0.3625035937554828);
+    // Supersimple 5% over 1 year
+    expect(getCAGR([1, 1.05], new Date(2023, 0, 1), new Date(2023, 11, 31))).toBeCloseTo(0.05);
+    // Simple 5% over 3 years
+    expect(getCAGR([1, 1.1576], new Date(2023, 0, 1), new Date(2025, 11, 31))).toBeCloseTo(0.05);
+});
+
+test('get cumulative return', () => {
+    expect(getCumulativeReturn(createTestData())).toBeCloseTo(1.0085);
 });
 
 test('get calmar', () => {
