@@ -4,13 +4,17 @@
   "description": "Tools and statistics to analyze a portfolio's performance, e.g. CAGR, Sortino, Drawdowns, Sharpe and Calmar.",
   "main": "src/main.mjs",
   "scripts": {
-    "test": "node --experimental-vm-modules node_modules/jest/bin/jest.js --watch"
+    "test": "node --trace-warnings --experimental-vm-modules node_modules/jest/bin/jest.js --watch"
   },
   "author": "",
   "license": "ISC",
   "dependencies": {
+    "ml-regression-simple-linear": "^3.0.1",
+    "simple-statistics": "^7.8.7"
+  },
+  "devDependencies": {
+    "@babel/eslint-parser": "^7.25.8",
     "eslint-config-airbnb": "^19.0.4",
-    "jest": "^29.7.0",
-    "simple-statistics": "^7.8.3"
+    "jest": "^29.7.0"
   }
 }

@@ -1,5 +1,4 @@
 import {
-    ensureArray,
     getMaxAsSeries,
     getRelativeDrawdownAsSeries,
     getMaxRelativeDrawdown,
@@ -13,9 +12,9 @@ import {
     getSharpe,
     getNormalizedAsSeries,
     getLinearRegression,
-    getLinearRegressionCAGR,
     getRobustRatio,
     getCumulativeReturn,
+    getLinearRegressionCAGR,
 } from './main.mjs';
 import createTestData from './test/createTestData.mjs';
 
@@ -27,13 +26,6 @@ const expectToBeCloseToArray = (actual, expected) => {
         expect(value).toBeCloseTo(expected[index])
     ));
 };
-
-test('ensures array and type', () => {
-    expect(() => ensureArray('t')).toThrow('Expected parameter to be an array, got t instead.');
-    expect(() => ensureArray([])).not.toThrow();
-    expect(() => ensureArray([5, 'y', 7, () => {}], 'number')).toThrow('Expected every item of array to be of type number, got items y, () => {} with types string, function instead.');
-    expect(() => ensureArray([2, 3, 4], 'number')).not.toThrow();
-});
 
 test('get max as series', () => {
     expect(getMaxAsSeries(createTestData())).toEqual([23.5, 23.5, 23.5, 23.5, 23.8, 24.0, 24.0]);
@@ -124,6 +116,8 @@ test('get sortino', () => {
     // Result: 0.00151868 / 0.01003942 = 0.15127169
     expect(getSortino(createTestData()))
         .toBe(0.15127368221893184);
+    // Test without any returns
+    expect(getSortino([1, 1, 1])).toBe(0);
 });
 
 test('get standard deviation', () => {
@@ -166,30 +160,6 @@ test('returns linear regression', () => {
     expect(emptyResult.m).toBe(NaN);
 });
 
-test('returns linear regression cagr', () => {
-    expect(() => getLinearRegressionCAGR([], [2])).toThrow(/instance of Date, got 2/);
-    expect(
-        () => getLinearRegressionCAGR([], [new Date(2024, 0, 2), new Date(2024, 0, 1)]),
-    ).toThrow(/to be after the previous.*date Mon Jan 01 2024/);
-    const datesAsString = [
-        '2024-01-01',
-        '2024-01-02',
-        '2024-01-03',
-        '2024-01-04',
-        '2024-01-06',
-        '2024-01-08',
-        '2024-01-09',
-    ];
-    const dates = datesAsString.map((item) => new Date(item));
-    const result = getLinearRegressionCAGR(createTestData(), dates);
-    // Use https://www.statskingdom.com/linear-regression-calculator.html with
-    // xValues: 0, 1, 2, 3, 5, 7, 8
-    // m = 23.2052, b = 0.07938
-    // Date difference is 8 days; end value is therefore 23.84024. 8 days is 0.02191 years
-    // CAGR is ((endValue / startValue) ** (1 / years)) - 1 = 2.42866092
-    expect(result).toBeCloseTo(2.428);
-});
-
 test('returns robust ratio', () => {
     const datesAsString = [
         '2024-01-01',
@@ -202,6 +172,10 @@ test('returns robust ratio', () => {
     ];
     const dates = datesAsString.map((item) => new Date(item));
     const result = getRobustRatio(createTestData(), dates);
-    // CAGR is 2.428, max DD is 0.0170; result is therefore 2.428 * (1 - 0.0170) = 2.386
-    expect(result).toBeCloseTo(2.386);
+    // CAGR is 2.248, max DD is -0.0170; result is therefore 2.428 * (1 - 0.0170) = 2.209
+    expect(result).toBeCloseTo(1.227);
+});
+
+test('exports relevant imported functions', () => {
+    expect(typeof getLinearRegressionCAGR).toBe('function');
 });

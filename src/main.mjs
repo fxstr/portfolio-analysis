@@ -1,34 +1,15 @@
-import { linearRegression, standardDeviation } from 'simple-statistics'
+import { linearRegression, standardDeviation } from 'simple-statistics';
 
-const dayInMs = 1000 * 60 * 60 * 24;
-const yearInMs = dayInMs * 365;
+// 2024-10-20: Start using separate files for separate functions
+import ensureArray from './helpers/ensureArray.mjs';
+import getTimes from './helpers/getTimes.mjs';
+import getLinearRegressionCAGR from './getLinearRegressionCAGR.mjs';
 
-/**
- * Ensures that an array is passed and optionally that every member is of the given type. Throws
- * if expectation is not met.
- * @param {array} data 
- * @param {string?} type    Type to check for by comparing it to `typeof item`; defaults to
- *                          'number'
- * @returns {array}         Original array
- * @throws                  An error if anything else than an array is passed or the type
- *                          requirements are not met
- */
-const ensureArray = (data, type = 'number') => {
-    if (!Array.isArray(data)) {
-        throw new Error(`Expected parameter to be an array, got ${data} instead.`);
-    }
-    if (type) {
-        const invalidItems = data.filter((item) => typeof item !== type);
-        if (invalidItems.length) {
-            throw new Error(`Expected every item of array to be of type ${type}, got items ${invalidItems.join(', ')} with types ${invalidItems.map((item) => typeof item).join(', ')} instead.`);
-        }
-    }
-    return data;
-};
+const { yearInMs } = getTimes();
 
 /**
  * Returns the maximum value of all previous and the current item as an array.
- * @param {Number[]} data 
+ * @param {Number[]} data
  * @returns {Number[]}
  */
 const getMaxAsSeries = (data) => (
@@ -39,7 +20,7 @@ const getMaxAsSeries = (data) => (
 
 /**
  * Returns the relative drawdown for a an array as an array; drawdowns are always ≤ 0.
- * @param {Number[]} data 
+ * @param {Number[]} data
  * @returns {Number[]}
  */
 const getRelativeDrawdownAsSeries = (data) => {
@@ -50,7 +31,7 @@ const getRelativeDrawdownAsSeries = (data) => {
 /**
  * Returns the maximum relative drawdown, e.g. -0.17 for a 17% drawdown (return value is always
  * <= 0)
- * @param {Number[]} data 
+ * @param {Number[]} data
  * @returns {Number}
  */
 const getMaxRelativeDrawdown = (data) => (
@@ -58,8 +39,9 @@ const getMaxRelativeDrawdown = (data) => (
 );
 
 /**
- * Returns the relative change from the current to the previous item.
- * @param {Number[]} data 
+ * Returns the relative change from the current to the previous item; if the change is 2% up,
+ * the return value will be 0.02. First value will always be NaN.
+ * @param {Number[]} data
  * @returns {Number[]}
  */
 const getRelativeChangeAsSeries = (data) => (
@@ -69,7 +51,7 @@ const getRelativeChangeAsSeries = (data) => (
 
 /**
  * Returns the average of a series.
- * @param {Number[]} data 
+ * @param {Number[]} data
  * @returns {Number}
  */
 const getAverage = (data) => (
@@ -87,14 +69,14 @@ const getAverage = (data) => (
 const getRelativeTimeInMarket = (data) => (
     // Ignore first entry in array because its relative change is NaN and we just don't know if we
     // were in the market on that date or not
-    1 - (getRelativeChangeAsSeries(data).filter((item) => item === 0).length /
-        (ensureArray(data).length - 1))
+    1 - (getRelativeChangeAsSeries(data).filter((item) => item === 0).length
+        / (ensureArray(data).length - 1))
 );
 
 /**
  * Returns cumulative return, e.g. 0.2 for a 20% return (from the first item of data to the last
  * item of data).
- * @param {Number[]} data 
+ * @param {Number[]} data
  * @returns {Number}
  */
 const getCumulativeReturn = (data) => (
@@ -105,9 +87,9 @@ const getCumulativeReturn = (data) => (
  * Returns compound annual growth rate ((endValue / startValue) ** (1 / years)) - 1 where a
  * year is assumed to have 365 days. Returns fraction (e.g. 0.05 for 5%).
  * See https://www.investopedia.com/terms/c/cagr.asp
- * @param {Number[]} data 
- * @param {Date} startDate 
- * @param {Date} endDate 
+ * @param {Number[]} data
+ * @param {Date} startDate
+ * @param {Date} endDate
  * @returns {Number}
  */
 const getCAGR = (data, startDate, endDate) => {
@@ -125,12 +107,12 @@ const getCAGR = (data, startDate, endDate) => {
 
 /**
  * Returns calmar ratio (CAGR / max drawdown)
- * @param {Number[]} data 
- * @param {Date} startDate 
- * @param {Date} endDate 
+ * @param {Number[]} data
+ * @param {Date} startDate
+ * @param {Date} endDate
  * @returns {Number}
  */
-const getCalmar = (data, startDate, endDate) => ( 
+const getCalmar = (data, startDate, endDate) => (
     getCAGR(data, startDate, endDate) / Math.max(...getRelativeDrawdownAsSeries(data).map(Math.abs))
 );
 
@@ -146,17 +128,20 @@ const getSortino = (data) => {
         // Get rid of that first NaN
         .slice(1)
         .filter((item) => item < 0);
+    // If all returns are 0, the following code will fail (because we cannot reduce over an
+    // empty array without an initial value); return 0 instead
+    if (downs.length === 0) return 0;
     const downsideSum = downs
         .map((item) => item ** 2)
         .reduce((sum, item) => sum + item);
     // Ignore first entry as its change is NaN
     const downside = Math.sqrt(downsideSum / downs.length);
     return getAverage(getRelativeChangeAsSeries(data).slice(1)) / downside;
-}
+};
 
 /**
  * Returns the standard deviation of the data set
- * @param {Number} data 
+ * @param {Number} data
  * @returns {Number}
  */
 const getStandardDeviation = (data) => (
@@ -165,9 +150,9 @@ const getStandardDeviation = (data) => (
 
 /**
  * Returns the sharpe ration of the data set
- * @param {Number[]} data 
- * @param {Date} startDate 
- * @param {Date} endDate 
+ * @param {Number[]} data
+ * @param {Date} startDate
+ * @param {Date} endDate
  * @returns {Number}
  */
 const getSharpe = (data, startDate, endDate) => (
@@ -177,14 +162,18 @@ const getSharpe = (data, startDate, endDate) => (
 /**
  * Returns data as a 1-based series (the first entry is 1, all following entries have the same
  * relative difference as the original series)
- * @param {Number[]} data 
+ * @param {Number[]} data
  * @returns {Number[]}
  */
 const getNormalizedAsSeries = (data) => (
-    ensureArray(data).map(item => item / data[0])
+    ensureArray(data).map((item) => item / data[0])
 );
 
 /**
+ * @deprecated
+ * Do not use anymore; linearRegression method from simple-statistics is rather slow, this solution
+ * did not account for exponential growth.
+ *
  * Returns linear regression for a dataset, consisting of slope m and intersect b. Uses
  * http://simple-statistics.github.io/docs/#linearregression.
  * @param {Number[]} data
@@ -198,39 +187,7 @@ const getLinearRegression = (yValues, xValues) => {
     }
     return linearRegression(
         ensureArray(yValues).map((value, index) => [xValues ? xValues[index] : index, value]),
-    )
-};
-
-/**
- * Returns the CAGR based on a linear regression of the data provided; the serie's first value
- * is m, the last value equals m + b * diff where diff is the amount of time between the first
- * and last value of data.
- * @param {Number[]} data
- * @param {Date[]} dates
- * @returns {Number}            CAGR for linear regression, e.g. 0.02 for 2%
- */
-const getLinearRegressionCAGR = (data, dates) => {
-    // Convert dates to indices; count index up by the amount of dates that lies between the
-    // current and the previous date
-    const invalidDate = dates.find((item) => !(item instanceof Date));
-    if(invalidDate) {
-        throw new Error(`Expects every item of dates to be an instance of Date, got ${invalidDate} in ${dates}.`);
-    }
-    const mixedUpDate = dates.find((item, index) => (
-        index !== 0 && item.getTime() <= dates.at(index - 1).getTime()
-    ));
-    if (mixedUpDate) {
-        throw new Error(`Expects every item of dates to be after the previous item; date ${mixedUpDate} does not follow that rule.`)
-    }
-    const xValues = ensureArray(dates, 'object')
-        .map((item, index) => index === 0 ? 0 : item.getTime() - dates.at(index - 1).getTime())
-        .map((item) => Math.round(item / dayInMs))
-        .reduce((previous, item) => (
-            [...previous, previous.length === 0 ? 0 : previous.at(-1) + item]
-        ), []);
-    const { m, b } = getLinearRegression(data, xValues);
-    const endValue = b + m * Math.max(...xValues);
-    return getCAGR([b, endValue], dates.at(0), dates.at(-1));
+    );
 };
 
 /**
@@ -244,7 +201,6 @@ const getRobustRatio = (data, dates) => (
     // getMaxRelativeDrawdown alsways returns a negative value
     getLinearRegressionCAGR(data, dates) * (1 + getMaxRelativeDrawdown(data))
 );
-
 
 export {
     ensureArray,

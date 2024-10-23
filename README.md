@@ -10,10 +10,10 @@ Comes without dependencies.
 Installation:
 ```
 npm i -S portfolio-analysis
-````
+```
 
 Usage:
-````
+```
 import { getSortino } from 'portfolio-analysis';
 
 const sortino = getSortino([25.2, 25.1, 25.7, 25.3]);
@@ -22,3 +22,6 @@ const sortino = getSortino([25.2, 25.1, 25.7, 25.3]);
 # Available Stats
 
 For now: See `main.mjs` and `main.test.mjs`.
+
+# Develop
+`npm run test`
